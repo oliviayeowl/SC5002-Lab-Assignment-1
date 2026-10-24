@@ -1,6 +1,7 @@
 # SC5002 Lab Assignment 1 #
 
 **Course:** SC5002 Artificial Intelligence Fundamentals and Applications, Nanyang Technological University
+
 **Author:** Yeo Wan Ling
 
 This repository contains my work for Lab Assignment 1. It has two parts:
