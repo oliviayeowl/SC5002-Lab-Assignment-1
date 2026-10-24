@@ -216,5 +216,5 @@ The common thread across the assignment is **balance**:
 ## Submission links
 
 - **Report (PDF):** submitted via NTULearn
-- **Video presentation:** [video-link]
+- **Video presentation:** [(https://youtu.be/G4lSrIAJcLc)]
 - **Notebook:** SC5002_Lab1.ipynb (in this repository)
