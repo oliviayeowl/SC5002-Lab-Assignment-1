@@ -1,39 +1,42 @@
-# SC5002 Lab Assignment 2
+# SC5002 Lab Assignment 1: Search Algorithms & Regularised Regression
 
 **Course:** SC5002 Artificial Intelligence Fundamentals and Applications, Nanyang Technological University
-
 **Author:** Yeo Wan Ling
+**Semester:** 2026 S1
 
-This repository contains my work for Lab Assignment 2. It has three parts:
+This repository contains my work for Lab Assignment 1. It has two parts:
 
-- **Exercise 1, K-Means clustering:** grouping 20 customers by income and spending score, choosing the number of clusters with the elbow method, and testing how much the random starting point matters
-- **Exercise 2, a K-Means failure case:** why K-Means cannot separate two rings, one inside the other
-- **Exercise 3, a neural network:** using the network from Tutorial 7 to tell apart the vowels in *head* and *had* from real speech recordings
+1. **Classical search:** tracing Breadth-First Search (BFS) and A* by hand on a weighted graph, and solving the 8-puzzle with A*
+2. **Applied machine learning:** comparing Linear Regression and Ridge Regression on the California Housing dataset in Google Colab
 
 Generative AI was used throughout as a learning partner, as the assignment requires. How I used it is described in [Use of Generative AI](#use-of-generative-ai).
+
+---
 
 ## Contents
 
 - [Repository structure](#repository-structure)
 - [How to run the notebook](#how-to-run-the-notebook)
-- [Exercise 1: K-Means clustering](#exercise-1-k-means-clustering)
-- [Exercise 2: Why K-Means fails on rings](#exercise-2-why-k-means-fails-on-rings)
-- [Exercise 3: Neural network vowel classification](#exercise-3-neural-network-vowel-classification)
-- [Debugging notes](#debugging-notes)
+- [Part 1: Classical search](#part-1-classical-search)
+- [Part 2: Machine learning](#part-2-machine-learning)
+- [Debugging note](#debugging-note)
 - [Use of Generative AI](#use-of-generative-ai)
 - [Key takeaways](#key-takeaways)
 - [Submission links](#submission-links)
+
+---
 
 ## Repository structure
 
 ```
 .
 ├── README.md                    # This file
-├── SC5002_Lab2.ipynb            # Completed Google Colab notebook (all three exercises)
-└── figs/                        # Figures saved by the notebook
+└── [notebook_name].ipynb        # Completed Google Colab notebook (Part 2)
 ```
 
-The full written analysis is in the PDF report submitted on NTULearn.
+> The Part 1 hand calculations, the AI prompting logs and the score tables are in the PDF report submitted on NTULearn.
+
+---
 
 ## How to run the notebook
 
@@ -41,231 +44,149 @@ The full written analysis is in the PDF report submitted on NTULearn.
 
 1. Open the notebook in Colab: **[Open in Colab]([colab-link])**
 2. Click **Runtime → Run all**.
-3. No setup is needed. The first cell installs `pyreadr` and downloads the vowel dataset automatically. PyTorch and every other library are already in Colab.
-
-Exercise 3 trains a few small networks, so a full run takes about a minute.
+3. No installation is needed. Colab already includes every library used.
 
 ### Option B: Run locally
 
 You need Python 3.9 or later.
 
 ```bash
-pip install numpy pandas matplotlib scikit-learn torch pyreadr jupyter
-jupyter notebook SC5002_Lab2.ipynb
+pip install numpy pandas matplotlib scikit-learn jupyter
+jupyter notebook [notebook_name].ipynb
 ```
 
-The first cell uses Colab's `!wget` to download the dataset. If that doesn't work on your machine, download [`h95.rda`](https://raw.githubusercontent.com/cran/phonTools/master/data/h95.rda) yourself and put it in the same folder as the notebook.
+The first run downloads the California Housing dataset through `sklearn.datasets.fetch_california_housing`, so you need an internet connection.
 
 ### Libraries used
 
 | Library | Purpose |
 |---|---|
 | `numpy`, `pandas` | Data handling |
-| `matplotlib` | All plots |
-| `scikit-learn` | K-Means, Adjusted Rand Index, scaling, train/validation/test split, confusion matrix |
-| `torch` (PyTorch) | The neural network, following Tutorial 7 |
-| `pyreadr` | Reading the vowel dataset, which is stored as an R data file |
+| `matplotlib` | Bar chart of model performance |
+| `scikit-learn` | Dataset, scaling, models and cross-validation |
 
-## Exercise 1: K-Means clustering
+---
 
-**Data:** 20 customers (C1–C20), with annual income (k$) on the x-axis and spending score on the y-axis. All runs use `KMeans(n_init=10, random_state=42)` unless stated otherwise.
+## Part 1: Classical search
 
-### Task 1.1: k = 3 vs k = 5
+Part 1 involved no code. All the working was done by hand, and the full step-by-step tables are in the PDF report. This is a summary of the results.
 
-| k | Cluster | Centre (income, score) | Customers |
+### Task 1.1: BFS vs A* on a weighted graph
+
+**Problem:** a directed graph from start state **S** to goal **G**.
+
+- Edges: S→A (2), S→B (1), S→F (3), A→C (2), A→D (3), B→D (2), B→E (4), C→G (4), D→G (4), F→G (6)
+- Admissible heuristic: h(S)=6, h(A)=4, h(B)=5, h(C)=2, h(D)=2, h(E)=8, h(F)=4, h(G)=0
+
+| Algorithm | Expansion order | Path found | Cost |
 |---|---|---|---|
-| 3 | Low spenders | (23.4, 12.8) | C3, C7, C9, C12, C16 |
-| 3 | Medium spenders | (25.8, 39.8) | C1, C5, C13, C14, C18, C20 |
-| 3 | High spenders | (24.2, 81.4) | C2, C4, C6, C8, C10, C11, C15, C17, C19 |
-| 5 | Low spenders | (21.8, 11.0) | C3, C7, C9, C12 |
-| 5 | Higher income, spend little | (32.0, 28.3) | C16, C18, C20 |
-| 5 | Medium spenders | (22.3, 43.5) | C1, C5, C13, C14 |
-| 5 | Big spenders, lower income | (19.5, 76.8) | C2, C4, C6, C10 |
-| 5 | Big spenders, higher income | (28.0, 85.2) | C8, C11, C15, C17, C19 |
+| **BFS** (FIFO queue, ignores costs) | S, A, B, F, C, D, E, G | S → F → G | 9 |
+| **A\*** (lowest f(n) = g(n) + h(n)) | S, A, B, D, C, F, G | **S → B → D → G** | **7** |
 
-- **k = 3** (WCSS = 1,495) splits customers into three bands by spending. Income hardly matters, partly because spending scores range from 6 to 94 while incomes only range from 15 to 34, so a gap in spending counts for much more in the distance calculation.
-- **k = 5** (WCSS = 852) splits the high spenders by income and gives C16, C18 and C20 their own group.
+**Finding:** BFS returns the *shallowest* path, the one with the fewest edges. A* returns the *cheapest* path. BFS is only optimal when every step costs the same. A* is optimal whenever the heuristic is admissible, meaning it never overestimates the true cost. For example, h(B) = 5 ≤ 6, the true cost from B to G.
 
-**Finding:** a lower WCSS doesn't automatically mean a better clustering. WCSS always goes down when you add more clusters, and would reach 0 if every customer had their own cluster.
+Ties in A* were broken alphabetically.
 
-### Task 1.2: Elbow method
-
-| k | 1 | 2 | 3 | 4 | 5 | 6 |
-|---|---|---|---|---|---|---|
-| WCSS | 17,886 | 3,306 | 1,495 | 1,171 | 852 | 635 |
-| Drop from previous k | – | 82% | 55% | 22% | 27% | 25% |
-
-The curve falls steeply until k = 3 and then flattens, so **the best number of clusters is k = 3** (low, medium and high spenders).
-
-### Task 1.3: Sensitivity to initialisation
-
-K-Means was run 10 times with a single random start each (`init="random", n_init=1`, seeds 0–9). Each result was compared with the best clustering found, using the Adjusted Rand Index (ARI; 1 = identical).
-
-| k | Runs that found the best clustering | Different answers | WCSS range |
-|---|---|---|---|
-| 3 | 7 / 10 | 3 | 1,495 – 2,914 |
-| 5 | 0 / 10 | 9 | 876 – 1,237 (best possible: 852) |
-
-**Why:** each K-Means step can only lower WCSS, and the algorithm stops as soon as no step helps. So it finds the best answer *near where it started* (a local minimum). With more clusters there are more ways to start badly. In one k = 5 run, two centres got stuck on single customers while all the high spenders were squashed into one group. **Fixes:** k-means++ initialisation, many restarts keeping the lowest WCSS (`n_init`), and a fixed random seed.
-
-## Exercise 2: Why K-Means fails on rings
-
-**Data:** 30 points forming an inner ring (label 1, distance 0.44–0.73 from the centre) inside an outer ring (label 0, distance 0.95–1.03).
-
-| Method | Accuracy |
-|---|---|
-| K-Means, k = 2, on (Feature1, Feature2) | **57%** (50–63% across 50 random starts) |
-| K-Means, k = 2, on distance from the centre r = √(F1² + F2²) | **100%** |
-
-**Why it fails:** K-Means assumes every cluster is a **round blob**. It describes each cluster with one centre point and gives every point to the closest centre. That breaks for rings:
-
-- **The centre of a ring is empty,** and both rings share the same centre, so their centroids can't tell them apart.
-- **The border between two K-Means clusters is always a straight line,** halfway between the centroids, and no straight line can separate a ring from the ring around it.
-
-So K-Means cut the plane in half instead, and each half held pieces of both rings. Describing each point by its distance from the centre turns the rings into two separate blobs, which K-Means then separates perfectly.
-
-## Exercise 3: Neural network vowel classification
-
-### 3.1 Problem definition and motivation
-
-**Task (binary classification):** given acoustic measurements of one vowel, decide whether the speaker said the vowel in ***head*** (/ɛ/, label 0) or ***had*** (/æ/, label 1).
-
-These two vowels are easy to confuse. Many English learners find them hard, and many Singapore English speakers don't distinguish them at all. Telling them apart automatically is useful for speech recognition, pronunciation apps and speech therapy. No single measurement separates them, so the model has to combine several clues, which a neural network can learn.
-
-### 3.2 Dataset and exploration
-
-**Source:** Hillenbrand, Getty, Clark & Wheeler (1995), *Acoustic characteristics of American English vowels*, loaded from the `h95` dataset in the R package [phonTools](https://cran.r-project.org/package=phonTools). Only *head* and *had* were kept: **278 recordings** (139 each) from 139 speakers (45 men, 48 women, 27 boys, 19 girls).
-
-| Input | Description |
-|---|---|
-| `dur` | How long the vowel lasts (ms) |
-| `f0` | Pitch of the voice (Hz) |
-| `f1` | First formant: related to tongue height (higher tongue → lower F1) |
-| `f2` | Second formant: related to tongue frontness (further forward → higher F2) |
-| `f3` | Third formant: mostly reflects the speaker's vocal-tract size |
-
-The vowel codes in the raw data are X-SAMPA: `E` = /ɛ/ (*head*), `{` = /æ/ (*had*).
-
-**Observations:**
-
-- **Length is the strongest clue.** *Had* is about 80 ms longer on average (310 vs 230 ms; correlation with the label 0.59).
-- **F1 and F2 overlap heavily.** Textbooks predict a higher F1 for *had*, but here it is slightly lower (663 vs 686 Hz). Most speakers are from Michigan, where the Northern Cities Shift raises the *had* vowel towards *head*.
-- **Pitch and F3 say nothing about the word on their own** (correlation 0.00), but they tell the model what kind of voice it is hearing.
-
-**Preprocessing:** there were no missing values. The inputs were standardised with `StandardScaler` (fitted on the training set only), because formants are in the thousands of Hz while duration is in the hundreds of ms. The data was split **60 / 20 / 20** into training, validation and test sets, using the same `train_test_split` calls as Tutorial 7 (`random_state=42`): 166 / 56 / 56 recordings.
-
-### 3.3 Model design
-
-The same `ANN` class as Tutorial 7, with 5 inputs instead of 2:
+### Task 1.2: 8-puzzle with A*
 
 ```
-5 inputs (dur, f0, F1, F2, F3)  →  4 hidden neurons (ReLU)  →  1 output neuron (sigmoid)
+Start          Goal
+2 8 3          1 2 3
+1 6 4    →     8 _ 4
+7 _ 5          7 6 5
 ```
 
-The output is the probability that the word is *had*. A value of 0.5 or more is classified as *had*. The network has **29 parameters** (5 × 4 + 4 biases = 24, plus 4 × 1 + 1 bias = 5). A small network suits a small dataset of 166 training recordings.
+- **g(n)** = depth of the node (the number of moves so far)
+- **h(n)** = number of misplaced tiles, not counting the blank
 
-| Setting | Value |
-|---|---|
-| Loss | `BCELoss` (binary cross-entropy) |
-| Optimiser | Adam, learning rate 0.01 |
-| Epochs | 500, full batch |
+| Step | Tile moved | State | g | h | f |
+|---|---|---|---|---|---|
+| 0 | – | `283 / 164 / 7_5` | 0 | 4 | 4 |
+| 1 | 6 ↓ | `283 / 1_4 / 765` | 1 | 3 | 4 |
+| 2 | 8 ↓ | `2_3 / 184 / 765` | 2 | 3 | 5 |
+| 3 | 2 → | `_23 / 184 / 765` | 3 | 2 | 5 |
+| 4 | 1 ↑ | `123 / _84 / 765` | 4 | 1 | 5 |
+| 5 | 8 ← | `123 / 8_4 / 765` (goal) | 5 | 0 | 5 |
 
-### 3.4–3.5 Training, validation and evaluation
+**Result:** the goal is reached in **5 moves**. f never exceeds 5 along the solution path.
 
-| | Training | Validation | Test |
-|---|---|---|---|
-| Accuracy | 91.6% | 85.7% | **85.7%** |
-| Loss at epoch 500 | 0.19 | 0.52 | 0.29 |
+**Lessons from the working:**
+- When two states tie on f, A* compares across the *entire* OPEN list, not just the newest children. One of the tied branches turned out to be a dead end.
+- A move that recreates an already-explored board is a **repeated state**. It should be marked as closed rather than expanded again, otherwise the search wastes effort or loops.
 
-**Test confusion matrix:**
+---
 
-| | Predicted *head* | Predicted *had* |
+## Part 2: Machine learning
+
+### Task 2.1: Dataset
+
+The notebook loads the **California Housing** dataset from scikit-learn and takes a random sample of **1,000 rows** (`random_state=42`). Each row describes one district in California.
+
+| Role | Column | Description |
 |---|---|---|
-| **Actual *head*** | 20 | 4 |
-| **Actual *had*** | 4 | 28 |
+| **Target** (continuous) | `MedHouseVal` | Median house value |
+| Feature | `MedInc` | Median income |
+| Feature | `HouseAge` | Median house age |
+| Feature | `AveRooms` | Average rooms per household |
+| Feature | `AveBedrms` | Average bedrooms per household |
+| Feature | `Population` | District population |
+| Feature | `AveOccup` | Average occupants per household |
+| Feature | `Latitude` | How far north the district is |
+| Feature | `Longitude` | How far east or west the district is |
 
-The model gets 48 of 56 unseen recordings right, against 50% for guessing. It makes four mistakes in each direction, so it is not biased towards one word. With only 56 test recordings, one recording changes accuracy by almost 2 percentage points.
+**Preprocessing:** all features are standardised with `StandardScaler`. Without it, a feature measured in the thousands (`Population`) would dominate one measured around 1 (`AveBedrms`). The data is then split 80/20 into training and test sets.
 
-### 3.6 Overfitting study
+### Task 2.2: Model training and alpha tuning
 
-**Mild overfitting.** All three losses fall together until **epoch 59**. After that, training loss keeps falling (0.29 → 0.19) while validation loss rises (0.36 → 0.52). Test loss barely changes (0.31 → 0.29), and validation accuracy stays at about 85%. The model is **not underfitting**, since training accuracy is above 90%.
+Two models were compared using **5-fold cross-validation** on the training set:
 
-**Remedies:** early stopping at epoch 59 (test accuracy **87.5%**), dropout or weight decay, keeping the network small, and more data.
+- **Linear Regression:** ordinary least squares, with no penalty
+- **Ridge Regression:** Linear Regression plus an L2 penalty on large coefficients, controlled by `alpha` (α)
 
-### 3.7 Ablation study
+| Model | α | Mean 5-fold R² |
+|---|---|---|
+| Linear Regression | – | 0.6457 |
+| Ridge Regression | 0.1 | 0.6457 |
+| Ridge Regression | 10 | 0.6443 |
+| Ridge Regression | 1000 | 0.3574 |
 
-**Learning rate** (4 hidden neurons, 500 epochs):
+**Why cross-validation?** A single train/test split depends on which houses happen to land in the test set. With 5-fold cross-validation, each fold takes a turn as validation data, and the five scores are averaged. This gives a fairer estimate of how the model performs on unseen data.
 
-| Learning rate | Best epoch (lowest val. loss) | Train / val / test accuracy | Behaviour |
-|---|---|---|---|
-| 0.1 | 7 | 94.0% / 87.5% / 80.4% | Learns fast, then overfits. Validation loss jumps up and wobbles |
-| **0.01** | 59 | 91.6% / 85.7% / **85.7%** | Fast and smooth. Best test score |
-| 0.001 | 500 | 88.6% / 82.1% / 83.9% | Still learning at epoch 500 (slight underfitting) |
+### Task 2.3: Visual analysis and overfitting
 
-**Hidden layer size** (learning rate 0.01):
+The notebook plots the four mean R² scores as a bar chart.
 
-| Hidden neurons | Train / val / test accuracy |
-|---|---|
-| 2 | 89.8% / 83.9% / 87.5% |
-| **4 (main)** | 91.6% / 85.7% / 85.7% |
-| 16 | 98.8% / 85.7% / 80.4% |
-| 64 | 100% / 87.5% / 80.4% |
+- **Small α (0.1, 10):** almost no change from Linear Regression. With only eight features and 800 training rows, the linear model was not overfitting much, so the penalty had little to correct. α = 10 even scored very slightly lower.
+- **Large α (1000):** R² drops to **0.357**. The penalty shrinks the coefficients so much that the model **underfits**. It can no longer capture real patterns, such as the link between income and house value.
 
-Bigger networks memorise the training set: training accuracy goes up while test accuracy goes down.
+**Takeaway:** regularisation is a balance. Too little penalty risks overfitting, which means memorising noise. Too much causes underfitting, which means missing real patterns. The right α captures genuine patterns without clinging to noise.
 
-**Inputs:**
+---
 
-| Inputs | Test accuracy |
-|---|---|
-| F1 + F2 only (2 inputs, like Tutorial 7) | 67.9% |
-| + duration | 78.6% |
-| All five | 85.7% |
+## Debugging note
 
-With only F1 and F2, the decision boundary (plotted in the notebook) cuts through both groups, because the vowels overlap so much. Vowel length adds the most.
-
-### 3.8 Case study
-
-| Speaker | Real → predicted | Confidence | Duration (ms) |
-|---|---|---|---|
-| Boy 24 | *had* → *had* ✓ | 100% | 451 |
-| Boy 8 | *head* → *head* ✓ | 100% | 193 |
-| Man 56 | *head* → *had* ✗ | 94% | 261 |
-| Man 78 | *head* → *had* ✗ | 93% | 244 |
-| Man 47 | *head* → *had* ✗ | 83% | 266 |
-| Man 78 | *had* → *had* ✓ | 100% | 326 |
-
-Test accuracy by speaker group: men 76%, women 94%, boys 92%, girls 82%.
-
-- **Successes** are clearly long or clearly short vowels.
-- **5 of the 8 mistakes came from men,** and the three most confident mistakes were all men saying *head* slowly. Length is the strongest clue, so a long *head* reads as *had*.
-- **Man 78** said both vowels with very similar formants (F2 ≈ 1,730 vs 1,840 Hz), and they differed mainly in length. The model never compares a speaker's two words, so it can't use that contrast.
-- **The remaining mistakes** were made at only about 60% confidence, which makes them borderline cases.
-
-The failures come from **insufficient features** (one length and one formant snapshot per recording) and **real overlap** in this accent, not from noisy data.
-
-### 3.9 Discussion and future work
-
-- **Improvements:** speaker normalisation (for example Lobanov), so each vowel is compared to the speaker's own voice; formant movement across the vowel, not just one snapshot; and splitting the data by speaker, so the model is tested only on new voices.
-- **With more time or computing power:** all 12 vowels in the dataset, cross-validation for more reliable scores than one 56-recording test set, and learning directly from the audio (spectrograms).
-- **Extensions:** testing on other accents, especially Singapore English, where these two vowels often merge, and use in pronunciation-practice or speech-therapy tools.
-
-## Debugging notes
-
-**1. A broken line at the end of the notebook.** An earlier version of the last cell contained:
+The code template in the lab manual contained a line that had been wrapped across two lines to fit the page:
 
 ```python
-json.dump(res, open("results_ex3.json", "w"), indent=1, def ault=str)
+print(f"Ridge Regression (alpha={a:6.1f})
+    Mean 5-Fold R2 Score: {scores.mean():.4f}")
 ```
 
-The stray space in `def ault` stops **Run all** with:
+Pasting this into Colab raised:
 
 ```
-SyntaxError: invalid syntax
+SyntaxError: unterminated f-string literal
 ```
 
-`default` must be written as one word. This cell was later replaced when Exercise 3 was rewritten.
+A normal Python string must close on the same line it opens on. The fix was to join it back into one line:
 
-**2. A confusing vowel code.** The raw data labels *had* as `{`, which looked like a mistake. It is actually the [X-SAMPA](https://en.wikipedia.org/wiki/X-SAMPA) code for /æ/. X-SAMPA writes IPA symbols with plain keyboard characters, and older phonetics datasets use it. The notebook maps the codes to words (`E` → *head*, `{` → *had*) so the tables are readable.
+```python
+print(f"Ridge Regression (alpha={a:6.1f}) Mean 5-Fold R2 Score: {scores.mean():.4f}")
+```
+
+The indentation lost when pasting from the PDF also had to be restored by hand.
+
+---
 
 ## Use of Generative AI
 
@@ -273,22 +194,27 @@ As the assignment's "Learn with AI" requirement asks, I used generative AI as a 
 
 | Area | How AI helped |
 |---|---|
-| **Concepts** | Explained why K-Means assumes round clusters, and why unscaled features let spending score dominate the distances in Exercise 1. |
-| **Scoping the problem** | Helped me narrow Exercise 3 from all 12 vowels down to one confusable pair, so it could reuse the binary Tutorial 7 network instead of a more complex model. |
-| **Code** | Helped adapt the Tutorial 7 `ANN` class and training loop to five inputs, and write the plotting and ablation code. |
-| **Interpreting results** | Helped me read the loss curves, the confusion matrix and the learning-rate comparison in plain language. |
+| **Concepts** | Explained admissible heuristics with a GPS analogy. A good heuristic is like a GPS distance estimate that never overshoots the real drive, so it never rules out the shortest route. |
+| **Checking working** | Reviewed my A* tables. It caught a typo (f = 23 instead of 13), flagged that I hadn't stated the final path, and pointed out that repeated states in the 8-puzzle should be marked as closed. |
+| **Debugging** | Explained the `unterminated f-string literal` error and why the string had to sit on one line. |
+| **Interpreting results** | Helped me explain, in plain language, why Ridge behaved as it did and why cross-validation is more reliable than a single split. |
 
-**Verification:** I didn't accept AI output blindly. For example, an early description said F1 rises "when the mouth is more open". From my phonetics background, I corrected this to the more precise explanation in terms of tongue height (a higher tongue gives a lower F1). I also checked that each figure matched what the explanation claimed, for example that the learning-rate plot did not show test loss.
+**Verification:** I didn't accept AI output blindly. Some answers depended on assumptions, such as how to break ties in A*. I checked these against my lecture slides and stated them explicitly in my working.
+
+---
 
 ## Key takeaways
 
-- **K-Means is simple but has strong assumptions.** It works for round, well-separated groups. It depends on feature scales and starting points, and it fails on shapes like rings.
-- **Choosing k is a judgement call.** The elbow method and interpretability pointed to the same answer, k = 3.
-- **For a small dataset, a small network is enough.** The Tutorial 7 network with four hidden neurons outperformed bigger ones on unseen data.
-- **Domain knowledge matters.** Knowing about vowel length, formants and the Northern Cities Shift explained both what the model learned and where it went wrong.
+The common thread across the assignment is **balance**:
+
+- **A\*** balances the cost so far, g(n), against the estimated cost remaining, h(n).
+- **Ridge Regression** balances fitting the data closely against keeping the model simple.
+- **Generative AI** was most useful when trusted enough to learn from, but still checked.
+
+---
 
 ## Submission links
 
 - **Report (PDF):** submitted via NTULearn
-- **Video presentation:** [(https://youtu.be/P-OVypJ-iuo)]
-- **Notebook:** SC5002_Lab2.ipynb (in this repository)
+- **Video presentation:** [https://youtu.be/G4lSrIAJcLc]
+- **Notebook:** SC5001_Lab1.ipynb (in this repository)
