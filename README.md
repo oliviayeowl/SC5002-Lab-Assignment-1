@@ -290,5 +290,5 @@ As the assignment's "Learn with AI" requirement asks, I used generative AI as a 
 ## Submission links
 
 - **Report (PDF):** submitted via NTULearn
-- **Video presentation:** [link](https://youtu.be/P-OVypJ-iuo)]
+- **Video presentation:** [(https://youtu.be/P-OVypJ-iuo)]
 - **Notebook:** SC5002_Lab2.ipynb (in this repository)
